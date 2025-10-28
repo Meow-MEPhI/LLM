@@ -1,0 +1,31 @@
+from langchain_text_splitters.character import RecursiveCharacterTextSplitter
+from langchain.docstore.document import Document
+from langchain_gigachat.chat_models import GigaChat
+
+with open("input.txt", "r", encoding="utf-8") as f:
+    text = f.read()
+
+docs = [Document(page_content=text)]
+
+# деление на чанки
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=2000,
+    chunk_overlap=200,
+    separators=["\n\n", "\n", " "]
+)
+
+doc_chunks = splitter.split_documents(docs)
+
+
+auth_key = "Yzg0NzdhNGQtMGNiYy00M2VlLWI3ZjYtOWUxOWI0YzhkMDhmOmY4M2I4OTg3LTNlMDktNDRkMS1iMTg5LTU0ODY1NjczMDU1Yg=="
+giga = GigaChat(credentials=auth_key, verify_ssl_certs=False)
+
+# саммари для каждого чанка
+summaries = []
+for chunk in doc_chunks:
+    prompt = f"Сделай краткое содержание этого фрагмента текста, ответь одним предложением:\n\n{chunk.page_content}"
+    response = giga.invoke(prompt)
+    summaries.append(response.content)
+
+final_summary = "\n\n".join(summaries)
+print("Итоговое саммари:\n", final_summary)
